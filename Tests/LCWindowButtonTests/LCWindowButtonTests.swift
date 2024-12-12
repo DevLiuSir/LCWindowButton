@@ -14,7 +14,5 @@ final class LCWindowButtonTests: XCTestCase {
         
         // 检查按钮类型是否正确
         XCTAssertEqual(button.buttonType, .close, "按钮类型应为关闭")
-        
-        
     }
 }

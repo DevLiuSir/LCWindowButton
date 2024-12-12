@@ -29,7 +29,7 @@ public class LCWindowOperateView: NSView {
 
     /// 初始化 LCWindowOperateView
     /// - Parameter buttonTypes: 包含按钮类型的数组，用于确定需要显示的按钮
-    init(buttonTypes: [LCWindowButtonOperateType]) {
+    public init(buttonTypes: [LCWindowButtonOperateType]) {
         self.buttonTypes = buttonTypes
         super.init(frame: .zero)
         setupButtons()  // 设置按钮
