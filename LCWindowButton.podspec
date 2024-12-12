@@ -4,7 +4,7 @@ Pod::Spec.new do |spec|
   
   spec.version        = "1.0.0"
   
-  spec.summary        = "A framework for customizing NSWindow's zoom in, close, zoom out, and full screen buttons!"
+  spec.summary        = "Customize the frame of NSWindow's zoom in, close, zoom out, and full screen buttons!"
   
   spec.description    = <<-DESC
               A framework for customizing NSWindow's zoom in, close, zoom out, and full screen buttons!
