@@ -1,4 +1,27 @@
-# LCWindowButton
+<p align="center">
+<img src="./Design/icon.jpg" width="300">
+</p>
+
+<p align="center"> <b> LCWindowButton is a framework for customizing NSWindow's zoom in, close, zoom out, and full screen buttons!</b></p>
+
+
+<img src="https://badgen.net/badge/icon/apple?icon=apple&label">
+<img src="https://img.shields.io/badge/language-swift-orange.svg">
+<img src="https://img.shields.io/badge/macOS-10.15-blue.svg">
+<img src="https://img.shields.io/badge/build-passing-brightgreen">
+<img src="https://img.shields.io/github/languages/top/DevLiuSir/LCWindowButton?color=blueviolet">
+<img src="https://img.shields.io/github/license/DevLiuSir/LCWindowButton.svg">
+<img src="https://img.shields.io/github/languages/code-size/DevLiuSir/LCWindowButton?color=ff69b4&label=codeSize">
+<img src="https://img.shields.io/github/repo-size/DevLiuSir/LCWindowButton">
+<img src="https://img.shields.io/github/last-commit/DevLiuSir/LCWindowButton">
+<img src="https://img.shields.io/github/commit-activity/m/DevLiuSir/LCWindowButton">
+<img src="https://img.shields.io/github/stars/DevLiuSir/LCWindowButton.svg?style=social&label=Star">
+<img src="https://img.shields.io/github/forks/DevLiuSir/LCWindowButton?style=social">
+<img src="https://img.shields.io/github/watchers/DevLiuSir/LCWindowButton?style=social">
+<a href="https://twitter.com/LiuChuan_"><img src="https://img.shields.io/twitter/follow/LiuChuan_.svg?style=social"></a>
+</p>
+
+
 
 
 ## How to use
@@ -11,9 +34,28 @@ view.addSubview(windowButtonView)
 ```
 
 
-## SwiftPackage
 
-Add `https://github.com/DevLiuSir/LCWindowButton ` in the [“Swift Package Manager” tab in Xcode](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app).
+### Design
+<img align="center" src="Design/preview.png" width=300> 
+
+
+
+## Installation
+
+### CocoaPods
+PermissionsKit is available through [CocoaPods](https://cocoapods.org). To install it, simply add the following line to your Podfile:
+
+```swift
+
+pod 'LCWindowButton'
+
+```
+
+
+
+### SwiftPackage
+
+Add `https://github.com/DevLiuSir/LCWindowButton.git` in the [“Swift Package Manager” tab in Xcode](https://developer.apple.com/documentation/xcode/adding_package_dependencies_to_your_app).
 
 
 ## License
