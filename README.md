@@ -1,10 +1,9 @@
 <p align="center">
 <img src="./Design/icon.jpg" width="300">
-</p>
 
 <p align="center"> <b> LCWindowButton is a framework for customizing NSWindow's zoom in, close, zoom out, and full screen buttons!</b></p>
 
-
+<p align="center">
 <img src="https://badgen.net/badge/icon/apple?icon=apple&label">
 <img src="https://img.shields.io/badge/language-swift-orange.svg">
 <img src="https://img.shields.io/badge/macOS-10.15-blue.svg">
