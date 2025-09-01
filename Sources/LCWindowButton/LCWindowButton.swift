@@ -18,37 +18,45 @@ class LCWindowButton: NSControl {
     // MARK: - Properties
     
     /// 按钮的类型，用于表示窗口按钮的功能（关闭、最小化、全屏等）。
-    var buttonType: LCWindowButtonType = .close {
+    public var buttonType: LCWindowButtonType = .close {
         didSet {
-            hover = false  // 当按钮类型变化时，取消鼠标悬停效果。
+            isHover = false  // 当按钮类型变化时，取消鼠标悬停效果。
             needsDisplay = true  // 标记需要重新绘制视图。
         }
     }
     
     /// 按钮的`激活状态`，用于指示按钮是否处于激活状态（例如，与当前窗口相关）。
-    var isActive: Bool = false {
-        didSet {
-            needsDisplay = true  // 标记需要重新绘制视图。
-        }
-    }
-    
-    /// 窗口是否处于`全屏状态`的标志。
-    private var isWindowFullScreen: Bool = false {
+    public var isActive: Bool = false {
         didSet {
             needsDisplay = true  // 标记需要重新绘制视图。
         }
     }
     
     /// 忽略自己的鼠标滑入, default = false
-    var ignoreMouseHover: Bool = false {
+    public var ignoreMouseHover: Bool = false {
         didSet {
             updateTrackingAreas()
         }
     }
+    
     /// 是否选中状态
-    var hover: Bool = false {
+    public var isHover: Bool = false {
         didSet {
             needsDisplay = true
+        }
+    }
+    
+    /// 是否禁用全屏按钮，设置 true 时按钮灰色且不可点击
+    public var isFullScreenButtonDisabled: Bool = false {
+        didSet {
+            needsDisplay = true
+        }
+    }
+    
+    /// 窗口是否处于`全屏状态`的标志。
+    private(set) var isWindowFullScreen: Bool = false {
+        didSet {
+            needsDisplay = true  // 标记需要重新绘制视图。
         }
     }
     
@@ -84,6 +92,7 @@ class LCWindowButton: NSControl {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        trackingAreas.forEach { removeTrackingArea($0) }
     }
     
     //MARK: - Handle notification
@@ -98,10 +107,16 @@ class LCWindowButton: NSControl {
     
     @objc private func windowDidFullScreen() {
         isWindowFullScreen = true
+        if buttonType == .mini {
+            isEnabled = false
+        }
     }
     
     @objc private func windowDidExitFullScreen() {
         isWindowFullScreen = false
+        if buttonType == .mini {
+            isEnabled = true
+        }
     }
     
     // MARK: - Mouse Tracking
@@ -114,29 +129,41 @@ class LCWindowButton: NSControl {
         trackingAreas.forEach(removeTrackingArea)
         guard !ignoreMouseHover else { return }
         // 添加新的追踪区域
-        let trackingArea = NSTrackingArea(
-            rect: bounds,
-            options: [.activeAlways, .mouseEnteredAndExited],
-            owner: self,
-            userInfo: nil
-        )
+        let trackingArea = NSTrackingArea( rect: bounds,
+                                           options: [.activeAlways, .mouseEnteredAndExited],
+                                           owner: self,
+                                           userInfo: nil)
         addTrackingArea(trackingArea)
     }
     
     /*** 光标进入跟踪区域 ***/
     override func mouseEntered(with event: NSEvent) {
-        hover = true    // 更新记录值
+        if let superView = superview, superView.isKind(of: LCWindowOperateView.self) {
+            super.mouseEntered(with: event)
+        } else {
+            isHover = true    // 更新记录值
+        }
     }
     
     /*** 光标已退出跟踪区域 ***/
     override func mouseExited(with event: NSEvent) {
-        hover = false  // 更新记录值
+        if let superView = superview, superView.isKind(of: LCWindowOperateView.self) {
+            super.mouseEntered(with: event)
+        } else {
+            isHover = false  // 更新记录值
+        }
     }
     
     // MARK: - Mouse Events
     
     /// 处理鼠标按下事件
     override func mouseDown(with event: NSEvent) {
+        // 如果全屏按钮被禁用，直接忽略点击
+        if (buttonType == .fullScreen || buttonType == .exitFullScreen),
+           isFullScreenButtonDisabled {
+            return
+        }
+        
         if isEnabled {
             // 设置窗口的第一响应者为当前控件
             window?.makeFirstResponder(self)
@@ -146,11 +173,14 @@ class LCWindowButton: NSControl {
     
     /// 处理鼠标抬起事件
     override func mouseUp(with event: NSEvent) {
-        if isEnabled {
-            if let action = action {
-                // 发送指定的动作到目标对象
-                NSApp.sendAction(action, to: target, from: self)
-            }
+        // 如果全屏按钮被禁用，直接忽略点击
+        if (buttonType == .fullScreen || buttonType == .exitFullScreen),
+           isFullScreenButtonDisabled {
+            return
+        }
+        if isEnabled, let action = action {
+            // 发送指定的动作到目标对象
+            NSApp.sendAction(action, to: target, from: self)
         }
         super.mouseUp(with: event)
     }
@@ -188,12 +218,19 @@ class LCWindowButton: NSControl {
             strokeColor = .rgba(223, 157, 24, 1)
             symbolColor = .rgba(153, 88, 1, 1)
         case .fullScreen, .exitFullScreen:
-            bgGradient = NSGradient(starting: .rgba(39, 201, 63, 1), ending: .rgba(39, 208, 65, 1))
-            strokeColor = .rgba(46, 176, 60, 1)
-            symbolColor = .rgba(1, 100, 0, 1)
+            // 如果全屏按钮被禁用，则绘制 灰色背景 并跳过 符号图形 绘制
+            if isFullScreenButtonDisabled {
+                bgGradient = NSGradient(starting: .gray, ending: .lightGray)
+                strokeColor = .darkGray
+                symbolColor = NSColor.white.withAlphaComponent(0.5) // 或其他灰色符号
+            } else {
+                bgGradient = NSGradient(starting: .rgba(39, 201, 63, 1), ending: .rgba(39, 208, 65, 1))
+                strokeColor = .rgba(46, 176, 60, 1)
+                symbolColor = .rgba(1, 100, 0, 1)
+            }
         }
         
-        if !isActive && !hover {
+        if !isActive && !isHover {
             bgGradient = NSGradient(starting: .rgba(79, 83, 79, 1), ending: .rgba(75, 79, 75, 1))
             strokeColor = .rgba(65, 65, 65, 1)
         }
@@ -209,9 +246,16 @@ class LCWindowButton: NSControl {
         path.lineWidth = 0.5
         path.stroke()
         
+        // 如果是最小化按钮，并且窗口处于全屏状态，则不绘制符号
         if buttonType == .mini && isWindowFullScreen { return }
         
-        guard hover else { return }
+        // 如果鼠标没有悬停，则不绘制符号
+        guard isHover else { return }
+        
+        // 如果全屏按钮被禁用，则不绘制全屏/退出全屏符号
+        if isFullScreenButtonDisabled && (buttonType == .fullScreen || buttonType == .exitFullScreen) {
+            return
+        }
         
         drawSymbol(for: buttonType, in: NSRect(x: 0, y: 0, width: width, height: height), with: symbolColor)
     }
@@ -237,12 +281,14 @@ class LCWindowButton: NSControl {
             color.setStroke()
             path.stroke()
         case .mini:
+            NSGraphicsContext.current?.shouldAntialias = false
             let path = NSBezierPath()
             path.move(to: NSPoint(x: width * 0.2, y: height * 0.5))
             path.line(to: NSPoint(x: width * 0.8, y: height * 0.5))
             path.lineWidth = 2
             color.setStroke()
             path.stroke()
+            NSGraphicsContext.current?.shouldAntialias = true
         case .fullScreen:
             let path = NSBezierPath()
             path.move(to: NSPoint(x: width * 0.25, y: height * 0.75))

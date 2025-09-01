@@ -9,12 +9,6 @@ import Foundation
 import Cocoa
 
 
-
-/// 按钮的高度
-let kLCWindowButtonWH: CGFloat = 13.0
-
-
-
 /// 窗口操作视图
 public class LCWindowOperateView: NSView {
     
@@ -24,17 +18,25 @@ public class LCWindowOperateView: NSView {
     /// 点击事件回调，返回被点击的按钮类型
     var clickHandler: ((LCWindowButtonType) -> Void)?
     
+    /// 是否禁用全屏按钮（禁用时按钮灰色且不可点击）
+    var isFullScreenDisabled: Bool = false
 
     // MARK: - Initializers
 
     /// 初始化 LCWindowOperateView
-    /// - Parameter buttonTypes: 包含按钮类型的数组，用于确定需要显示的按钮
-    public init(buttonTypes: [LCWindowButtonOperateType]) {
+    /// - Parameters:
+    ///   - buttonTypes: 包含按钮类型的数组，用于确定需要显示的按钮
+    ///   - isFullScreenDisabled: 是否禁用全屏按钮（默认 false），禁用时按钮灰色且不可点击
+    public init(buttonTypes: [LCWindowButtonOperateType], isFullScreenDisabled: Bool = false) {
+        self.isFullScreenDisabled = isFullScreenDisabled
         self.buttonTypes = buttonTypes
         super.init(frame: .zero)
         setupButtons()  // 设置按钮
     }
     
+    /// 按钮的高度
+    private let kLCWindowButtonWH: CGFloat = 13.0
+
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -61,13 +63,33 @@ public class LCWindowOperateView: NSView {
             }
             let button = LCWindowButton(type: buttonType)
             button.ignoreMouseHover = true
+            button.isFullScreenButtonDisabled = isFullScreenDisabled
             button.target = self
             button.action = #selector(operateButtonClicked(_:))
             addSubview(button)
         }
-        self.frame = NSRect(x: 0, y: 0, width: CGFloat(subviews.count) * (kLCWindowButtonWH + 7.5) - 7.5, height: 15)
+        
+        /// 按钮之间的间距
+        let buttonSpacing: CGFloat = 7.5
+        /// 按钮容器的高度（包含上下 padding）
+        let kLCWindowButtonContainerH: CGFloat = 15.0
+        
+        // 计算按钮容器的总宽度 = 按钮数量 * (按钮宽度 + 间距) - 最后一个按钮的间距
+        let totalWidth: CGFloat = CGFloat(subviews.count) * (kLCWindowButtonWH + buttonSpacing) - buttonSpacing
+        self.frame = NSRect(x: 0, y: 0, width: totalWidth, height: kLCWindowButtonContainerH)
     }
-
+    
+    
+    public override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            if let window = window, window.styleMask.contains(.fullScreen) {
+                // 窗口是全屏模式, 需要将全屏按钮改为退出全屏按钮
+                guard let fullScreenBtn = button(withType: .fullScreen) else  { return }
+                fullScreenBtn.buttonType = .exitFullScreen
+            }
+        }
+    }
     
     // MARK: - Layout
     
@@ -83,11 +105,12 @@ public class LCWindowOperateView: NSView {
     public override func layout() {
         super.layout()
         var left: CGFloat = 0 // 子视图的起始 x 坐标
-        var frame = NSRect(x: 0, y: 0, width: kLCWindowButtonWH, height: kLCWindowButtonWH)
         
-        // 设置子视图在垂直方向上的居中
-        frame.origin.y = (bounds.height - kLCWindowButtonWH) / 2
+        let height = bounds.height
+        // 设置子视图，在垂直方向居中
+        let y: CGFloat = (height - kLCWindowButtonWH) / 2
         
+        var frame = NSRect(x: 0, y: y, width: kLCWindowButtonWH, height: kLCWindowButtonWH)
         for subview in subviews {
             guard let button = subview as? LCWindowButton else { continue } // 忽略非 LCWindowButton 类型的子视图
             frame.origin.x = left   // 设置按钮的 x 坐标
@@ -116,7 +139,7 @@ public class LCWindowOperateView: NSView {
     public override func mouseEntered(with event: NSEvent) {
         // 设置所有子按钮的 hover 状态为 true
         subviews.forEach { (subview) in
-            (subview as? LCWindowButton)?.hover = true
+            (subview as? LCWindowButton)?.isHover = true
         }
     }
 
@@ -124,7 +147,7 @@ public class LCWindowOperateView: NSView {
     public override func mouseExited(with event: NSEvent) {
         // 设置所有子按钮的 hover 状态为 false
         subviews.forEach { (subview) in
-            (subview as? LCWindowButton)?.hover = false
+            (subview as? LCWindowButton)?.isHover = false
         }
     }
     
@@ -152,7 +175,7 @@ public class LCWindowOperateView: NSView {
             }
         }
         subviews.forEach { (subview) in
-            (subview as? LCWindowButton)?.hover = false
+            (subview as? LCWindowButton)?.isHover = false
         }
         clickHandler?(sender.buttonType)
     }
