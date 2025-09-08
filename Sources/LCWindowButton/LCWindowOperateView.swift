@@ -16,10 +16,10 @@ public class LCWindowOperateView: NSView {
     var buttonTypes: [LCWindowButtonOperateType]
     
     /// 点击事件回调，返回被点击的按钮类型
-    var clickHandler: ((LCWindowButtonType) -> Void)?
+    public var clickHandler: ((LCWindowButtonType) -> Void)?
     
     /// 是否禁用全屏按钮（禁用时按钮灰色且不可点击）
-    var isFullScreenDisabled: Bool = false
+    public var isFullScreenDisabled: Bool = false
 
     // MARK: - Initializers
 
