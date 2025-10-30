@@ -1,9 +1,6 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
 //
 //  LCWindowButton.swift
-//  WindowButton
+//  
 //
 //  Created by DevLiuSir on 2020/12/11.
 //
@@ -204,15 +201,18 @@ class LCWindowButton: NSControl {
         let width = bounds.width
         let height = bounds.height
         
+        /// 按钮背景渐变，用于绘制圆形按钮的光影层次效
         var bgGradient: NSGradient?
+        /// 背景色
         var strokeColor: NSColor = .clear
+        /// 前景色
         var symbolColor: NSColor = .clear
         
         switch buttonType {
         case .close:
             bgGradient = NSGradient(starting: .rgba(255, 95, 86, 1), ending: .rgba(255, 99, 91, 1))
             strokeColor = .rgba(226, 62, 55, 1)
-            symbolColor = .rgba(77, 0, 0, 1)
+            symbolColor = .rgba(154, 18, 0, 1)
         case .mini:
             bgGradient = NSGradient(starting: .rgba(255, 189, 46, 1), ending: .rgba(255, 197, 47, 1))
             strokeColor = .rgba(223, 157, 24, 1)
@@ -277,15 +277,19 @@ class LCWindowButton: NSControl {
             path.line(to: NSPoint(x: width * 0.7, y: height * 0.7))
             path.move(to: NSPoint(x: width * 0.7, y: height * 0.3))
             path.line(to: NSPoint(x: width * 0.3, y: height * 0.7))
-            path.lineWidth = 1
+            path.lineWidth = 1.5
+            path.lineCapStyle = .round      // 让线条两端呈圆弧状，更加圆润自然
             color.setStroke()
             path.stroke()
         case .mini:
-            NSGraphicsContext.current?.shouldAntialias = false
+            // shouldAntialia = true 表示开启抗锯齿，系统会对线条边缘进行平滑处理，使得线条看起来更加自然、柔和
+            // shouldAntialias = false 表示关闭抗锯齿，绘制出的线条会更加锐利、像素感强。
+            NSGraphicsContext.current?.shouldAntialias = true
             let path = NSBezierPath()
             path.move(to: NSPoint(x: width * 0.2, y: height * 0.5))
             path.line(to: NSPoint(x: width * 0.8, y: height * 0.5))
-            path.lineWidth = 2
+            path.lineWidth = 1.5
+            path.lineCapStyle = .round          // 让线条两端呈圆弧状，更加圆润自然
             color.setStroke()
             path.stroke()
             NSGraphicsContext.current?.shouldAntialias = true

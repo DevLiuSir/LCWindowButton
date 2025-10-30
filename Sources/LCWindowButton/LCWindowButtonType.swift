@@ -1,6 +1,6 @@
 //
 //  LCWindowButtonType.swift
-//  WindowButton
+//  
 //
 //  Created by DevLiuSir on 2020/12/11.
 //

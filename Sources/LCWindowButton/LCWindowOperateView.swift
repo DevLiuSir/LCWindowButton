@@ -1,6 +1,6 @@
 //
 //  LCWindowOperateView.swift
-//  WindowButton
+//  
 //
 //  Created by DevLiuSir on 2020/12/11.
 //
@@ -12,17 +12,14 @@ import Cocoa
 /// 窗口操作视图
 public class LCWindowOperateView: NSView {
     
-    /// 按钮类型数组，用于确定窗口操作视图中包含哪些按钮
-    var buttonTypes: [LCWindowButtonOperateType]
-    
     /// 点击事件回调，返回被点击的按钮类型
     public var clickHandler: ((LCWindowButtonType) -> Void)?
     
     /// 是否禁用全屏按钮（禁用时按钮灰色且不可点击）
     public var isFullScreenDisabled: Bool = false
-
+    
     // MARK: - Initializers
-
+    
     /// 初始化 LCWindowOperateView
     /// - Parameters:
     ///   - buttonTypes: 包含按钮类型的数组，用于确定需要显示的按钮
@@ -34,14 +31,33 @@ public class LCWindowOperateView: NSView {
         setupButtons()  // 设置按钮
     }
     
-    /// 按钮的高度
-    private let kLCWindowButtonWH: CGFloat = 13.0
-
-    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
+    /// 按钮类型数组，用于确定窗口操作视图中包含哪些按钮
+    private var buttonTypes: [LCWindowButtonOperateType]
+    
+    
+    /// 按钮高度
+    private let buttonSize: CGFloat = {
+        if #available(macOS 26.0, *) {
+            return 14
+        } else {
+            return 13
+        }
+    }()
+    
+    /// 容器高度略大于按钮高度
+    private var containerHeight: CGFloat {
+        return buttonSize + 2
+    }
+    
+    /// 按钮之间间距 = 容器高度的一半
+    private var buttonSpacing: CGFloat {
+        return containerHeight / 2
+    }
     
     /// 创建并返回一个 LCWindowOperateView 实例
     /// - Parameter buttonTypes: 包含按钮类型的数组
@@ -52,7 +68,7 @@ public class LCWindowOperateView: NSView {
     
     
     // MARK: - Setup Buttons
-
+    
     /// 设置按钮
     private func setupButtons() {
         for (_ , buttonType) in buttonTypes.enumerated() {
@@ -68,18 +84,40 @@ public class LCWindowOperateView: NSView {
             button.action = #selector(operateButtonClicked(_:))
             addSubview(button)
         }
-        
-        /// 按钮之间的间距
-        let buttonSpacing: CGFloat = 7.5
-        /// 按钮容器的高度（包含上下 padding）
-        let kLCWindowButtonContainerH: CGFloat = 15.0
-        
-        // 计算按钮容器的总宽度 = 按钮数量 * (按钮宽度 + 间距) - 最后一个按钮的间距
-        let totalWidth: CGFloat = CGFloat(subviews.count) * (kLCWindowButtonWH + buttonSpacing) - buttonSpacing
-        self.frame = NSRect(x: 0, y: 0, width: totalWidth, height: kLCWindowButtonContainerH)
+        // 计算总宽度
+        let totalWidth: CGFloat = CGFloat(subviews.count) * (buttonSize + buttonSpacing) - buttonSpacing
+        self.frame = NSRect(x: 0, y: 0, width: totalWidth, height: containerHeight)
     }
     
     
+    // MARK: - Layout
+    
+    /// 指定视图的坐标系是否是翻转的
+    /// 返回 `true` 表示原点位于左上角
+    public override var isFlipped: Bool {
+        return true
+    }
+    
+    
+    /// 布局子视图
+    /// 根据视图宽度和子按钮的宽度动态排列子视图
+    public override func layout() {
+        super.layout()
+        
+        var left: CGFloat = 0   // 子视图的起始 x 坐标
+        // 设置子视图，在垂直方向居中
+        let y: CGFloat = (bounds.height - buttonSize) / 2
+        var frame = NSRect(x: 0, y: y, width: buttonSize, height: buttonSize)
+        
+        for subview in subviews {
+            guard let button = subview as? LCWindowButton else { continue } // 忽略非 LCWindowButton 类型的子视图
+            frame.origin.x = left               // 设置按钮的 x 坐标
+            button.frame = frame                // 更新计算好的尺寸
+            left = frame.maxX + buttonSpacing   // 更新下一个按钮的起始 x 坐标
+        }
+    }
+    
+    // 当视图被添加到窗口后调用
     public override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
@@ -91,37 +129,9 @@ public class LCWindowOperateView: NSView {
         }
     }
     
-    // MARK: - Layout
     
-    
-    /// 指定视图的坐标系是否是翻转的
-    /// 返回 `true` 表示原点位于左上角
-    public override var isFlipped: Bool {
-        return true
-    }
-
-    /// 布局子视图
-    /// 根据视图宽度和子按钮的宽度动态排列子视图
-    public override func layout() {
-        super.layout()
-        var left: CGFloat = 0 // 子视图的起始 x 坐标
-        
-        let height = bounds.height
-        // 设置子视图，在垂直方向居中
-        let y: CGFloat = (height - kLCWindowButtonWH) / 2
-        
-        var frame = NSRect(x: 0, y: y, width: kLCWindowButtonWH, height: kLCWindowButtonWH)
-        for subview in subviews {
-            guard let button = subview as? LCWindowButton else { continue } // 忽略非 LCWindowButton 类型的子视图
-            frame.origin.x = left   // 设置按钮的 x 坐标
-            button.frame = frame    // 应用计算好的框架
-            left = frame.maxX + 7.5 // 更新下一个按钮的起始 x 坐标
-        }
-    }
-    
-    
-
     // MARK: - Mouse Tracking
+    
     // 更新鼠标跟踪区域， 用于监控鼠标进入和离开视图的事件
     public override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -134,7 +144,7 @@ public class LCWindowOperateView: NSView {
         )
         addTrackingArea(trackingArea) // 添加新的跟踪区域
     }
-
+    
     /** 处理鼠标进入区域 **/
     public override func mouseEntered(with event: NSEvent) {
         // 设置所有子按钮的 hover 状态为 true
@@ -142,7 +152,7 @@ public class LCWindowOperateView: NSView {
             (subview as? LCWindowButton)?.isHover = true
         }
     }
-
+    
     /** 处理鼠标离开区域 **/
     public override func mouseExited(with event: NSEvent) {
         // 设置所有子按钮的 hover 状态为 false
@@ -153,7 +163,7 @@ public class LCWindowOperateView: NSView {
     
     
     // MARK: - Button Actions
-
+    
     /// 按钮点击事件的处理方法
     /// - Parameter sender: 被点击的按钮
     @objc private func operateButtonClicked(_ sender: LCWindowButton) {
@@ -179,9 +189,9 @@ public class LCWindowOperateView: NSView {
         }
         clickHandler?(sender.buttonType)
     }
-
+    
     // MARK: - Helper Method
-
+    
     /// 查找`指定类型的按钮`
     /// - Parameter buttonType: 按钮的类型
     /// - Returns: 与指定类型匹配的按钮，如果未找到则返回 `nil`
